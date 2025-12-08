@@ -1,0 +1,14 @@
+export { HeroSection } from "./hero-section";
+export { ProblemsSection } from "./problems-section";
+export { SolutionSection } from "./solution-section";
+export { HowItWorksSection } from "./how-it-works-section";
+export { UseCasesSection } from "./use-cases-section";
+export { VibeAdOpsSection } from "./vibe-adops-section";
+export { CapabilitiesSection } from "./capabilities-section";
+export { TechStackSection } from "./tech-stack-section";
+export { PricingSection } from "./pricing-section";
+export { TestimonialsSection } from "./testimonials-section";
+export { FaqSection } from "./faq-section";
+export { CtaSection } from "./cta-section";
+export { FooterSection } from "./footer-section";
+export { Navbar } from "./navbar";
