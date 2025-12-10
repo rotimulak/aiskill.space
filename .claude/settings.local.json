@@ -5,7 +5,8 @@
       "Bash(mkdir:*)",
       "Bash(node utils/deploy-ftp.js:*)",
       "Bash(node utils/generate-favicons.js:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []
