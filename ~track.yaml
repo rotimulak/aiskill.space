@@ -1,0 +1,151 @@
+output_format: markdown
+# T7 - Поиск и анализ Telegram каналов для целевой аудитории | v1.0
+
+variables:
+  # ВХОДНАЯ переменная (заменяется текстом из бота)
+  target_audience: ""
+
+  # Промежуточные переменные
+  channels_urls: ""
+  current_page_html: ""
+  current_page_clean: ""
+  raw_data_array: "[]"
+  final_json: "{}"
+  final_md: ""
+
+nodes:
+  # 1. Получение списка URL каналов
+  - name: get_channels_list
+    type: genText
+    echo: "🔍 Поиск Telegram каналов для аудитории: {{target_audience}}"
+    prompt: |
+      Найди 10 РЕАЛЬНЫХ Telegram каналов для целевой аудитории: {{target_audience}}
+
+      Используй веб-поиск для нахождения актуальных каналов.
+
+      ВАЖНО: Выведи ТОЛЬКО список URL в формате:
+      t.me/channelname1
+      t.me/channelname2
+      t.me/channelname3
+
+      Без нумерации, без описаний, только чистые URL каналов (по одному на строку).
+    model: "gpt-4o-mini"
+    web_search: true
+    log: { md: true, stdout: 400 }
+    save_to_variable: "channels_urls"
+
+  # 2. Обработка каждого канала через iterate - накопление raw данных
+  - name: process_channels
+    type: iterate
+    echo: "📱 Сбор данных по каналам..."
+    iterate_lines: "{{channels_urls}}"
+    nodes:
+      # 2.1. Загрузка HTML страницы
+      - name: fetch_page
+        type: langchainTool
+        tool_name: "web_fetch"
+        echo: "  └─ Загрузка: {{iterate}}"
+        arguments:
+          url: "https://{{iterate}}"
+        tool_config: {}
+        save_to_variable: "current_page_html"
+
+      # 2.2. Очистка HTML через lxml_cleaner
+      - name: clean_html
+        type: langchainTool
+        tool_name: "lxml_cleaner"
+        arguments:
+          html_content: "{{current_page_html}}"
+        tool_config: {}
+        save_to_variable: "current_page_clean"
+
+      # 2.3. Добавление raw данных в JSON массив
+      - name: append_raw_data
+        type: placeholder
+        echo: "  └─ Накопление данных: {{iterate}}"
+        template_content: |
+          {{raw_data_array}}{"url":"{{iterate}}","raw_data":"{{current_page_clean}}"}
+        save_to_variable: "raw_data_array"
+
+      # 2.4. Задержка между запросами
+      - name: delay_between_requests
+        type: delay
+        seconds: 2
+        echo: "  └─ Пауза 2 сек..."
+
+  # 3. Обработка всех накопленных данных одним запросом
+  - name: process_all_data
+    type: genText
+    echo: "🔧 Обработка собранных данных..."
+    prompt: |
+      Преобразуй массив с raw данными в структурированный JSON.
+
+      Входные данные (массив объектов с url и raw_data):
+      {{raw_data_array}}
+
+      Для КАЖДОГО элемента массива извлеки информацию из raw_data и верни валидный JSON:
+      {
+        "target_audience": "{{target_audience}}",
+        "channels": [
+          {
+            "url": "t.me/channelname",
+            "name": "название канала",
+            "description": "описание канала",
+            "subscribers": "количество подписчиков"
+          }
+        ],
+        "total_count": N
+      }
+
+      ВАЖНО:
+      - Обработай ВСЕ элементы из входного массива
+      - Верни ТОЛЬКО валидный JSON
+      - БЕЗ markdown форматирования
+      - Если данных недостаточно, используй "N/A"
+    model: "gpt-4o-mini"
+    log: { md: true, stdout: 400 }
+    save_to_variable: "final_json"
+
+  # 4. Создание читаемой MD версии для отчета
+  - name: create_markdown_report
+    type: genText
+    echo: "📄 Создание читаемого отчета..."
+    prompt: |
+      Преобразуй JSON данные в красивый markdown отчет:
+
+      {{final_json}}
+
+      Структура отчета:
+      # Telegram каналы для: {{target_audience}}
+
+      ## Статистика
+      - Найдено каналов: [число]
+      - Дата анализа: [текущая дата]
+
+      ## Топ каналы
+
+      ### 1. [Название]
+      - **URL:** t.me/...
+      - **Подписчики:** ...
+      - **Описание:** ...
+
+      [продолжи для всех каналов]
+
+      ## Выводы
+      [Краткий анализ найденных каналов]
+    model: "gpt-4o-mini"
+    log: { md: true, stdout: 400 }
+    save_to_variable: "final_md"
+
+  # 5. Сохранение результатов
+  - name: save_json
+    type: placeholder
+    echo: "💾 Сохранение JSON..."
+    template_content: "{{final_json}}"
+    save_to_track: "result/t7_result.json"
+
+  - name: save_markdown
+    type: placeholder
+    echo: "💾 Сохранение отчета..."
+    template_content: "{{final_md}}"
+    save_to_track: "result/t7_result.md"

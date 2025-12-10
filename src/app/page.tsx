@@ -8,6 +8,7 @@ import {
   VibeAdOpsSection,
   CapabilitiesSection,
   TechStackSection,
+  WorkflowSection,
   PricingSection,
   CtaSection,
   FooterSection,
@@ -54,6 +55,7 @@ export default function Home() {
             <CapabilitiesSection />
           </section>
           <TechStackSection />
+          <WorkflowSection />
         </div>
 
         {/* Third parallax section with fixed background */}

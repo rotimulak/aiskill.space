@@ -1,0 +1,119 @@
+output_format: markdown
+# Research v1 - Prototype Research Assistant | v1.0
+
+variables:
+  project_description: "AI-powered task automation system with natural language interface"
+  search_query: ""
+  general_results: ""
+  paperswithcode_results: ""
+
+nodes:
+  # 1. Формулировка поискового запроса
+  - name: formulate_query
+    type: genText
+    echo: "Formulating search query..."
+    prompt: |
+      На основе описания проекта сформулируй краткий поисковый запрос
+      для поиска технологий, методов и данных, которые помогут создать прототип.
+
+      Описание проекта: {{project_description}}
+
+      Верни только поисковый запрос без дополнительных пояснений.
+    model: "gpt-4o-mini"
+    log: {md: true, stdout: 200}
+    save_to_variable: "search_query"
+
+  # 2. Общий веб-поиск
+  - name: general_search
+    type: genText
+    echo: "General web search..."
+    prompt: |
+      Найди актуальную информацию по запросу: {{search_query}}
+
+      Сосредоточься на:
+      - Актуальных технологиях и подходах
+      - Open-source решениях и библиотеках
+      - Best practices и примерах реализации
+      - Статьях и туториалах
+
+      Предоставь структурированный обзор с ссылками.
+    model: "gpt-4o-mini"
+    web_search: true
+    log: {md: true, stdout: 600}
+    save_to_variable: "general_results"
+
+  # 3. Поиск на Papers with Code
+  - name: paperswithcode_search
+    type: genText
+    echo: "Papers with Code search..."
+    prompt: |
+      Найди релевантные исследования и имплементации по запросу: {{search_query}}
+      on website https://paperswithcode.com/
+
+      Сосредоточься на:
+      - State-of-the-art моделях и методах
+      - Репозиториях с кодом
+      - Benchmarks и датасетах
+      - Недавних публикациях (2023-2024)
+
+      Предоставь список находок с описаниями и ссылками.
+    model: "gpt-4o-mini"
+    web_search: true
+    log: {md: true, stdout: 600}
+    save_to_variable: "paperswithcode_results"
+
+  # 4. Сохранение общих результатов
+  - name: save_general
+    type: placeholder
+    template_content: |
+      # Общий поиск информации
+
+      **Поисковый запрос:** {{search_query}}
+
+      ## Результаты
+
+      {{general_results}}
+    save_to_track: "result/general_search.md"
+
+  # 5. Сохранение результатов Papers with Code
+  - name: save_paperswithcode
+    type: placeholder
+    template_content: |
+      # Papers with Code - Исследования и код
+
+      **Поисковый запрос:** {{search_query}}
+
+      ## Результаты
+
+      {{paperswithcode_results}}
+    save_to_track: "result/paperswithcode_search.md"
+
+  # 6. Итоговый отчет
+  - name: final_report
+    type: placeholder
+    echo: "Research complete"
+    template_content: |
+      # Отчет по исследованию прототипа
+
+      ## Описание проекта
+      {{project_description}}
+
+      ## Сформулированный запрос
+      {{search_query}}
+
+      ---
+
+      ## Общие результаты поиска
+
+      {{general_results}}
+
+      ---
+
+      ## Научные исследования и код (Papers with Code)
+
+      {{paperswithcode_results}}
+
+      ---
+
+      **Дата исследования:** {{timestamp}}
+    save_to_track: "result/full_report.md"

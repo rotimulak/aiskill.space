@@ -6,6 +6,7 @@ export { UseCasesSection } from "./use-cases-section";
 export { VibeAdOpsSection } from "./vibe-adops-section";
 export { CapabilitiesSection } from "./capabilities-section";
 export { TechStackSection } from "./tech-stack-section";
+export { WorkflowSection } from "./workflow-section";
 export { PricingSection } from "./pricing-section";
 export { TestimonialsSection } from "./testimonials-section";
 export { FaqSection } from "./faq-section";
